@@ -54,7 +54,7 @@ flux-cli-bootstrap:
 		--owner=ricsanfre \
 		--repository=fluxcd-test \
 		--branch=master \
-		--path=kubernetes/clusters/dev \
+		--path=test/flux-cli \
 		--personal
 
 
@@ -65,5 +65,8 @@ cluster-bootstrap:
 
 .PHONY: flux-bootstrap
 flux-bootstrap:
+	kubectl create secret generic flux-system -n flux-system \
+		--from-literal=username=git \
+		--from-literal=password="$(shell gpg -d -r ricsanfre@gmail.com ${HOME}/git_pat_gpg)"
 	kubectl kustomize --enable-helm --load-restrictor=LoadRestrictionsNone \
 	   ./kubernetes/clusters/dev/flux-system | kubectl apply -f -
