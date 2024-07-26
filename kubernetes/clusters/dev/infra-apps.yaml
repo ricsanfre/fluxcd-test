@@ -11,7 +11,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./infrastructure/nginx/app/overlays/dev
+  path: ./kubernetes/infrastructure/nginx/app/overlays/dev
   prune: true
 
 ---
@@ -28,6 +28,6 @@ spec:
     name: flux-system
   dependsOn:
     - name: ingress-nginx-app
-  path: ./infrastructure/nginx/config/overlays/dev
+  path: ./kubernetes/infrastructure/nginx/config/overlays/dev
   prune: true
 ---
