@@ -6,7 +6,7 @@ resources:
 
 configMapGenerator:
   - name: {{ .app_name }}-base-values
-    namespace: nginx
+    namespace: {{ .app_namespace }}
     files:
       - values.yaml
 configurations:

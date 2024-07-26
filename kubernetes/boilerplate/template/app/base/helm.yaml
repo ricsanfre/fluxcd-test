@@ -4,7 +4,7 @@ kind: HelmRepository
 metadata:
   name: {{ .app_name }}
 spec:
-  url: {{ .chart_repo }}
+  url: {{ .chart_repo_url }}
   interval: 10m
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
