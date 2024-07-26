@@ -4,8 +4,7 @@ resources:
   - helm.yaml
 
 configMapGenerator:
-  - name: ingress-nginx-base-values
-    namespace: nginx
+  - name: cilium-base-values
     files:
       - values.yaml
 configurations:
