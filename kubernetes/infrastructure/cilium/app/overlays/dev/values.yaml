@@ -1,0 +1,5 @@
+# cilium helm values (dev patch)
+
+# K8s API service
+k8sServiceHost: picluster-control-plane
+

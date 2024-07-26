@@ -1,9 +1,6 @@
-# nginx application
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
 kind: Kustomization
 metadata:
-  name: ingress-nginx-app
+  name: cilium-app
   namespace: flux-system
 spec:
   interval: 5m
@@ -11,14 +8,14 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./kubernetes/infrastructure/nginx/app/overlays/dev
+  path: ./kubernetes/infrastructure/cilium/app/overlays/dev
   prune: true
 
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
 kind: Kustomization
 metadata:
-  name: ingress-nginx-config
+  name: cilium-config
   namespace: flux-system
 spec:
   interval: 5m
@@ -27,7 +24,6 @@ spec:
     kind: GitRepository
     name: flux-system
   dependsOn:
-    - name: ingress-nginx-app
-  path: ./kubernetes/infrastructure/nginx/config/overlays/dev
+    - name: cilium-app
+  path: ./kubernetes/infrastructure/cilium/config/overlays/dev
   prune: true
----
