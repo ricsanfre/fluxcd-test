@@ -38,10 +38,15 @@ helm-setup:
 cilium-install-helm:
 	helm install cilium cilium/cilium --namespace kube-system -f cilium-values.yaml
 
+.PHONY: cilium-helmfile
+cilium-helmfile:
+	helmfile --quiet --file ./kubernetes/clusters/bootstrap/helmfile.yaml apply --skip-diff-on-install --suppress-diff
+
+
 .PHONY: cilium-config
 cilium-config:
 	kubectl kustomize --enable-helm --load-restrictor=LoadRestrictionsNone \
-	   ./kubernetes/infrastructure/cilium-config/overlays/dev | kubectl apply -f -
+	   ./kubernetes/infrastructure/cilium/config/overlays/dev | kubectl apply -f -
 
 .PHONY: flux-cli-install
 flux-cli-install:
@@ -58,13 +63,11 @@ flux-cli-bootstrap:
 		--personal
 
 
-.PHONY: cluster-bootstrap
+.PHONY: flux-bootstrap
 cluster-bootstrap:
 	kubectl kustomize --enable-helm --load-restrictor=LoadRestrictionsNone \
-	   ./kubernetes/clusters/bootstrap | kubectl apply -f -
+	   ./kubernetes/clusters/bootstrap/flux | kubectl apply -f -
 
-.PHONY: flux-bootstrap
-flux-bootstrap:
 	kubectl create secret generic flux-system -n flux-system \
 		--from-literal=username=git \
 		--from-literal=password="$(shell gpg -d -r ricsanfre@gmail.com ${HOME}/git_pat_gpg)"
