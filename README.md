@@ -51,13 +51,18 @@ type: Opaque
 - Provide values.yaml files from configMaps, using Kustomize's configMap generator.
 - Base and Overlay values.yaml file
 - Config Maps are suffixed with a hashe code over its content.
-	- if configMap content is changed, name is also changed forcing the re-deploy of all resources using that configMap 
+	- if configMap content is changed, name is also changed forcing the re-deploy of all resources using that configMap.
 
-### Boilerplate
+### Scaffold a new flux-cd application
 
 
+For scaffolding automatically out a new application from a template defined in a set of files and folders, a tool like [boilerplate](https://github.com/gruntwork-io/boilerplate) from gruntwork-io can be used.
 
-For generating automatically a a structure for a new application automatically from a structure application
+The basic idea behind Boilerplate is that you create a template folder that contains:
+
+- A `boilerplate.yml` file that configures the template, such as the input variables to gather from the user.
+- Any number of other files and folders that generate the code you want, using Go templating syntax to fill in those input variables where necessary, do loops, do conditionals, and so on.
+
 
 Install [boilerplate](https://github.com/gruntwork-io/boilerplate) from gruntwork-io
 
@@ -65,36 +70,75 @@ Install [boilerplate](https://github.com/gruntwork-io/boilerplate) from gruntwor
 Template in `kubernetes/boilerplate/template` (result of command `tree -n -q --charset utf-8` .)
 
 
-Application structure
+#### Template flux-cd application:
 
 ```shell
 📁 <application>         
 ├── 📁 app                 # base app (helm installation)
-│   ├── 📁 base   									# kustomization base
-│   │   ├── helm.yaml									 # flux helm resources
+│   ├── 📁 base                    # kustomization base
+│   │   ├── helm.yaml                  # flux helm resources
 │   │   ├── kustomization.yaml         # kustomization file (base)
 │   │   ├── kustomizeconfig.yaml       # confiMap generator config
-│   │   ├── ns.yaml										 # namespace manifest
-│   │   └── values.yaml								 # helm values file (base)
-│   └── 📁 overlays									# kustomization overalys
+│   │   ├── ns.yaml                    # namespace manifest
+│   │   └── values.yaml                # helm values file (base)
+│   └── 📁 overlays                # kustomization overalys
 │       ├── 📁 dev
 │       │   ├── kustomization.yaml     # kustomization file (overlay)
 │       │   └── values.yaml            # helm values file (overlay)
 │       └── 📁 prod
 │           ├── kustomization.yaml
 │           └── values.yaml
-├── 📁 config 							# config app (additional configuration)
+├── 📁 config               # config app (additional configuration)
 │   ├── 📁 base
 │   └── 📁 overlays
 │       ├── 📁 dev
 │       └── 📁 prod
 ```
 
-
+To build a new application from the template. User will be prompted to provide values for all variables included in the `boilerplate.yml`
 
 ```shell
-boilerplate --template-url kubernetes/boilerplate/template --output-folder <output-folder>
+boilerplate --template-url <template-folder> --output-folder <output-folder>
+```
 
+To use variables defined in yaml file instead, define a `vars.yaml` file, containing values for all variables in `boilerplate.yml`
+
+```shell
+boilerplate \
+  --template-url <template-folder> \
+  --output-folder <output-folder> \
+  --var-file vars.yml \
+  --non-interactive 
+```
+
+## Helmfile
+
+[helmfile](https://github.com/helmfile/helmfile) is a declarative spec for deploying helm charts. It uses `helm` command 
+
+```yaml
+helmDefaults:
+  wait: true
+  waitForJobs: true
+  timeout: 600
+  recreatePods: true
+  force: true
+
+repositories:
+  - name: cilium
+    url: https://helm.cilium.io
+
+releases:
+  - name: cilium
+    namespace: kube-system
+    chart: cilium/cilium
+    version: 1.16.0
+    values:
+      - ./kubernetes/infrastructure/cilium/app/base/values.yaml
+      - ./kubernetes/infrastructure/cilium/app/overlays/dev/values.yaml
+```
+
+```shell
+helmfile --quiet --file helmfile.yaml apply --skip-diff-on-install --suppress-diff
 ```
 
 
@@ -102,4 +146,13 @@ boilerplate --template-url kubernetes/boilerplate/template --output-folder <outp
 
 - https://fluxcd.io/flux/installation/bootstrap/github/
 
-- https://devopscube.com/kuztomize-configmap-generators/
+- [Academeez K8s and fluxcd course](https://www.academeez.com/en/course/kubernetes/flux)
+  - [Repo and videos](https://github.com/ywarezk/academeez-k8s-flux)
+
+- Managing Kubernetes the GitOps way with Flux
+  - [Repo](https://github.com/moonswitch-workshops/terraform-eks-flux)
+  - [Video](https://youtu.be/1DuxTlvmaNM?si=SaFfQ30Z1fLAo-Tp)
+
+- [Introducing boilerplate](https://blog.gruntwork.io/introducing-boilerplate-6d796444ecf6)
+
+- [Generators [Practical Examples]](https://devopscube.com/kuztomize-configmap-generators/)
