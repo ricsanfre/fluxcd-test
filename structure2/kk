@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx
+---
+apiVersion: v1
+data:
+  base-values.yaml: |
+    # nginx helm values (base)
+
+    controller:
+      replicaCount: 2
+      autoscaling:
+        enabled: true
+        minReplicas: 2
+        maxReplicas: 20
+  loadbalancer-values.yaml: |2-
+      # Set specific LoadBalancer IP address for Ingress service
+      service:
+        annotations:
+          io.cilium/lb-ipam-ips: 10.2.2.2
+  otel-values.yaml: |-
+    controller:
+      # Enabling Promethues metrics and Service Monitoring
+      metrics:
+        enabled: true
+        serviceMonitor:
+          enabled: true
+      # Enabling OTEL traces
+      opentelemetry:
+       enabled: true
+
+      config:
+        # Open Telemetry
+        enable-opentelemetry: "true"
+        otlp-collector-host: tempo-distributor.tempo.svc.cluster.local
+        otlp-service-name: nginx-internal
+        # Print access log to file instead of stdout
+        # Separating acces logs from the rest
+        access-log-path: "/data/access.log"
+        log-format-escape-json: "true"
+        log-format-upstream: '{"source": "nginx", "time": $msec, "resp_body_size": $body_bytes_sent, "request_host": "$http_host", "request_address": "$remote_addr", "request_length": $request_length, "request_method": "$request_method", "uri": "$request_uri", "status": $status,  "user_agent": "$http_user_agent", "resp_time": $request_time, "upstream_addr": "$upstream_addr", "trace_id": "$opentelemetry_trace_id", "span_id": "$opentelemetry_span_id"}'
+      # controller extra Volume
+      extraVolumeMounts:
+        - name: data
+          mountPath: /data
+      extraVolumes:
+        - name: data
+          emptyDir: {}
+      extraContainers:
+        - name: stream-accesslog
+          image: busybox
+          args:
+          - /bin/sh
+          - -c
+          - tail -n+1 -F /data/access.log
+          imagePullPolicy: Always
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /data
+            name: data
+  overlay-values.yaml: |
+    # nginx helm values (prod patch)
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-helm-values-8d74tkd2g5
+  namespace: nginx
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ingress-nginx
+  namespace: nginx
+spec:
+  chart:
+    spec:
+      chart: ingress-nginx
+      sourceRef:
+        kind: HelmRepository
+        name: ingress-nginx
+      version: 4.11.1
+  install:
+    remediation:
+      remediateLastFailure: true
+      retries: 3
+  interval: 5m
+  upgrade:
+    remediation:
+      remediateLastFailure: true
+      retries: 3
+  valuesFrom:
+  - kind: ConfigMap
+    name: ingress-nginx-helm-values-8d74tkd2g5
+    valuesKey: base-values.yaml
+  - kind: ConfigMap
+    name: ingress-nginx-helm-values-8d74tkd2g5
+    valuesKey: otel-values.yaml
+  - kind: ConfigMap
+    name: ingress-nginx-helm-values-8d74tkd2g5
+    valuesKey: loadbalancer-values.yaml
+  - kind: ConfigMap
+    name: ingress-nginx-helm-values-8d74tkd2g5
+    valuesKey: overlay-values.yaml
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: ingress-nginx
+  namespace: nginx
+spec:
+  interval: 10m
+  url: https://kubernetes.github.io/ingress-nginx
