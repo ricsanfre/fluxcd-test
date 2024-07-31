@@ -11,24 +11,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./structure2/platform/nginx/app/overlays/dev
-  prune: true
-
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: ingress-nginx-config
-  namespace: flux-system
-spec:
-  interval: 5m
-  targetNamespace: nginx
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  dependsOn:
-    - name: ingress-nginx-app
-  path: ./structure2/platform/nginx/config/overlays/prod
+  path: ./structure2/platform/nginx/app/overlays/prod
   prune: true
   postBuild:
     substitute:
@@ -40,3 +23,21 @@ spec:
         optional: true
       # - kind: Secret
       #   name: cluster-secret-vars
+
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: ingress-nginx-config
+#   namespace: flux-system
+# spec:
+#   interval: 5m
+#   targetNamespace: nginx
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#   dependsOn:
+#     - name: ingress-nginx-app
+#   path: ./structure2/platform/nginx/config/overlays/prod
+#   prune: true
+  
